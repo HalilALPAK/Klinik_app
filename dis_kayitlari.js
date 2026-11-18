@@ -50,14 +50,12 @@ function disKayitlariniGoster() {
   );
 }
 
-function hastaDisVerisiniYaz(alanlar) {
-  const yazildi = acikHastayiGuncelle(alanlar);
-  if (yazildi) disKayitlariniGoster();
-  return yazildi;
-}
+// Değişiklikler güncel hasta kaydı üzerinde hesaplanır; sunucuda çakışma olursa yeniden uygulanır
+const eksikleriDegistir = (degistir) => acikHastayiGuncelle((h) => ({ eksikDisler: degistir(h.eksikDisler || []) }));
+const disKayitlariniDegistir = (degistir) => acikHastayiGuncelle((h) => ({ disKayitlari: degistir(h.disKayitlari || []) }));
 
-function disiSil(no) {
-  hastaDisVerisiniYaz({ eksikDisler: [...eksikDisler(), no] });
+async function disiSil(no) {
+  if (!(await eksikleriDegistir((liste) => [...new Set([...liste, no])]))) return;
   const secim = disPaneli.secim();
   if (secim.includes(no)) {
     const yeniSecim = secim.filter((n) => n !== no);
@@ -67,16 +65,17 @@ function disiSil(no) {
 }
 
 function disiGeriGetir(no) {
-  hastaDisVerisiniYaz({ eksikDisler: eksikDisler().filter((n) => n !== no) });
+  eksikleriDegistir((liste) => liste.filter((n) => n !== no));
 }
 
 function hazirIslemEkle(dis, ad) {
-  hastaDisVerisiniYaz({ disKayitlari: [...disKayitlari(), { id: yeniKimlik(), dis, tur: "islem", ad }] });
+  const kayit = { id: yeniKimlik(), dis, tur: "islem", ad };
+  disKayitlariniDegistir((liste) => [...liste, kayit]);
 }
 
 function kaydiSil(kayit) {
   if (!confirm(`"${kayit.ad}" kaydı silinsin mi?`)) return;
-  hastaDisVerisiniYaz({ disKayitlari: disKayitlari().filter((k) => k.id !== kayit.id) });
+  disKayitlariniDegistir((liste) => liste.filter((k) => k.id !== kayit.id));
 }
 
 /* Sağ tık menüsü */
@@ -283,13 +282,18 @@ document.getElementById("dis-kayit-iptal").addEventListener("click", () => {
   disKayitPenceresi.close();
 });
 
-disKayitFormu.addEventListener("submit", (olay) => {
+disKayitFormu.addEventListener("submit", async (olay) => {
   olay.preventDefault();
   const { dis, tur } = kayitHedefi;
   const ad = disKayitAdi.value.trim();
-  const varMi = birDisinKayitlari(dis).some((k) => k.tur === tur && kucult(k.ad) === kucult(ad));
-  disKayitAdi.setCustomValidity(varMi ? "Bu kayıt bu dişte zaten var." : "");
+  const ayniKayitMi = (k) => k.dis === dis && k.tur === tur && kucult(k.ad) === kucult(ad);
+  disKayitAdi.setCustomValidity(birDisinKayitlari(dis).some(ayniKayitMi) ? "Bu kayıt bu dişte zaten var." : "");
   if (!disKayitAdi.reportValidity()) return;
-  if (!hastaDisVerisiniYaz({ disKayitlari: [...disKayitlari(), { id: yeniKimlik(), dis, tur, ad }] })) return;
-  disKayitPenceresi.close();
+  const dugme = disKayitFormu.querySelector('button[type="submit"]');
+  dugme.disabled = true;
+  const yeni = { id: yeniKimlik(), dis, tur, ad };
+  // Başka bilgisayar aynı kaydı az önce eklediyse ikinci kez eklenmez
+  const kaydedildi = await disKayitlariniDegistir((liste) => (liste.some(ayniKayitMi) ? liste : [...liste, yeni]));
+  dugme.disabled = false;
+  if (kaydedildi) disKayitPenceresi.close();
 });

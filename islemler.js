@@ -22,9 +22,18 @@ const yapilanBos = document.getElementById("yapilan-bos");
 // { id: düzenlenen işlem (yeni satırda null), alanlar, disHucresi }
 let islemTaslagi = null;
 let islemTaslakDegisti = false;
+let islemKaydediliyor = false;
 
-const acikHastaIslemleri = () => acikHasta().islemler || [];
-const islemleriYaz = (islemler) => acikHastayiGuncelle({ islemler });
+const hastaninIslemleri = (hasta) => hasta.islemler || [];
+const acikHastaIslemleri = () => hastaninIslemleri(acikHasta());
+
+// degistir(güncel işlem listesi) yeni listeyi döndürür; sunucuda çakışma olursa
+// güncel kayıt üzerinde yeniden çalıştırılır (hastalar.js)
+const islemleriDegistir = (degistir) => acikHastayiGuncelle((hasta) => ({ islemler: degistir(hastaninIslemleri(hasta)) }));
+
+function islemVarMi(liste, id) {
+  if (!liste.some((i) => i.id === id)) throw new CakismaHatasi("Bu işlem başka bir bilgisayarda silinmiş.");
+}
 const tarihGoster = (tarih) => tarih.split("-").reverse().join(".");
 const disYazisi = (disler) => disler.join(", ");
 
@@ -196,7 +205,9 @@ function taslagiKapat() {
   islemleriCiz();
 }
 
-function taslagiKaydet() {
+// Kayıt başarısızsa satır açık kalır, kullanıcının yazdığı kaybolmaz
+async function taslagiKaydet() {
+  if (islemKaydediliyor) return false;
   const { id, alanlar } = islemTaslagi;
   if (!alanlar.tedavi.reportValidity() || !alanlar.doktor.reportValidity()) return false;
   const veri = {
@@ -206,30 +217,37 @@ function taslagiKaydet() {
     doktor: alanlar.doktor.value.trim(),
     not: alanlar.not.value.trim(),
   };
-  const islemler = acikHastaIslemleri();
-  const yeniListe = id === null
-    ? [...islemler, { id: yeniKimlik(), ...veri, yapildi: false, yapilmaTarihi: null }]
-    : islemler.map((i) => (i.id === id ? { ...i, ...veri } : i));
-  if (!islemleriYaz(yeniListe)) return false;
+  const yeniId = yeniKimlik();
+  islemKaydediliyor = true;
+  const kayit = await islemleriDegistir((liste) => {
+    if (id === null) return [...liste, { id: yeniId, ...veri, yapildi: false, yapilmaTarihi: null }];
+    islemVarMi(liste, id);
+    return liste.map((i) => (i.id === id ? { ...i, ...veri } : i));
+  });
+  islemKaydediliyor = false;
+  if (!kayit) return false;
   taslagiKapat();
   return true;
 }
 
 // + düğmesi: açık satır varsa önce onu kaydeder, sonra yeni satır açar
-function yeniIslemEkle() {
-  if (islemTaslagi && !taslagiKaydet()) return;
+async function yeniIslemEkle() {
+  if (islemTaslagi && !(await taslagiKaydet())) return;
   taslakAc(null);
 }
 
-function islemDurumunuDegistir(id, yapildi) {
+async function islemDurumunuDegistir(id, yapildi) {
   const yapilmaTarihi = yapildi ? bugununTarihi() : null;
-  islemleriYaz(acikHastaIslemleri().map((i) => (i.id === id ? { ...i, yapildi, yapilmaTarihi } : i)));
+  await islemleriDegistir((liste) => {
+    islemVarMi(liste, id);
+    return liste.map((i) => (i.id === id ? { ...i, yapildi, yapilmaTarihi } : i));
+  });
   islemleriCiz();
 }
 
-function islemSil(id, sira) {
+async function islemSil(id, sira) {
   if (!confirm(`${sira} numaralı işlem silinsin mi?`)) return;
-  islemleriYaz(acikHastaIslemleri().filter((i) => i.id !== id));
+  await islemleriDegistir((liste) => liste.filter((i) => i.id !== id));
   islemleriCiz();
 }
 

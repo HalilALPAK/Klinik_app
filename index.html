@@ -7,8 +7,81 @@
   <link rel="stylesheet" href="stil.css">
 </head>
 <body>
+  <div id="baglanti-bandi" class="baglanti-bandi" role="alert" hidden>
+    <span id="baglanti-mesaji">Sunucuya bağlanılamıyor. Yazdıklarınız kaybolmaz; bağlantı gelince tekrar kaydedin.</span>
+    <button id="baglanti-tekrar" class="dugme" type="button">Tekrar dene</button>
+  </div>
+  <div id="bildirim" class="bildirim" role="status" hidden></div>
+
+  <div id="kullanici-cubugu" class="kullanici-cubugu" hidden>
+    <span id="kullanici-adi"></span>
+    <button id="cikis-dugmesi" class="dugme" type="button">Çıkış</button>
+  </div>
+
+  <!-- Giriş -->
+  <section id="giris-sayfasi" class="sayfa" hidden>
+    <header class="ana-baslik">
+      <div class="logo-cerceve">
+        <img src="logo.png" alt="Alpotech Şirketler Grubu">
+      </div>
+    </header>
+    <form id="giris-formu" class="kart bilgi-formu giris-karti">
+      <h1>Giriş</h1>
+      <div class="alanlar">
+        <label>E-posta
+          <input name="eposta" type="email" required autocomplete="username">
+        </label>
+        <label>Şifre
+          <input name="sifre" type="password" required autocomplete="current-password">
+        </label>
+      </div>
+      <div class="form-alt">
+        <span id="giris-mesaji" class="giris-mesaji" role="status"></span>
+        <button class="dugme birincil" type="submit">Giriş Yap</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Bir kerelik taşıma: yalnızca panel index.html dosyasından açılınca -->
+  <section id="tasima-sayfasi" class="sayfa" hidden>
+    <header class="ana-baslik">
+      <div class="logo-cerceve">
+        <img src="logo.png" alt="Alpotech Şirketler Grubu">
+      </div>
+    </header>
+    <div class="kart tasima-karti">
+      <h1>Sunucuya Taşıma</h1>
+      <p>Panel artık klinik sunucusundan açılıyor. Bu sayfa, bu tarayıcıda kalmış eski kayıtları sunucuya taşımak içindir.</p>
+      <p id="tasima-ozeti"></p>
+
+      <h2>1. Hastaları dışa aktar</h2>
+      <p>Hastaları bir dosyaya indirir. Bu dosya hasta bilgisi içerir: yalnızca USB ile sunucuya taşıyın, başka bir yere koymayın.</p>
+      <button id="tasima-disa-aktar" class="dugme birincil" type="button">Hastaları Dışa Aktar (.json)</button>
+
+      <h2>2. Görselleri sunucuya yükle</h2>
+      <p>Dosya sunucuya aktarıldıktan sonra yapılır. Eski görseller ve röntgen resimleri, sunucudaki hastalarına yüklenir.</p>
+      <form id="tasima-yukleme-formu" class="bilgi-formu tasima-formu">
+        <div class="alanlar">
+          <label>Sunucu adresi
+            <input name="adres" type="url" required placeholder="http://192.168.1.10:8091">
+          </label>
+          <label>E-posta
+            <input name="eposta" type="email" required autocomplete="username">
+          </label>
+          <label>Şifre
+            <input name="sifre" type="password" required autocomplete="current-password">
+          </label>
+        </div>
+        <div class="form-alt">
+          <span id="tasima-durumu" role="status"></span>
+          <button class="dugme birincil" type="submit">Görselleri Yükle</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
   <!-- Ana ekran: hasta listesi -->
-  <section id="liste-sayfasi" class="sayfa">
+  <section id="liste-sayfasi" class="sayfa" hidden>
     <header class="ana-baslik">
       <div class="logo-cerceve">
         <img src="logo.png" alt="Alpotech Şirketler Grubu">
@@ -19,6 +92,7 @@
       <div class="liste-arac">
         <h1>Hastalar</h1>
         <input id="hasta-arama" type="search" placeholder="Hasta No, isim, soyisim veya TC ile ara" aria-label="Hasta ara" autocomplete="off">
+        <a class="dugme eslesmeyen-dugmesi" href="#eslesmeyenler">Eşleşmeyen Röntgenler <span id="eslesmeyen-sayisi" class="sayi-rozeti">0</span></a>
         <button id="yeni-hasta-dugmesi" class="dugme birincil" type="button">+ Yeni Hasta</button>
       </div>
       <table class="hasta-tablosu">
@@ -29,6 +103,17 @@
       </table>
       <p id="liste-bos" class="liste-bos" hidden></p>
     </div>
+  </section>
+
+  <!-- Hasta No ile eşleşmeyen röntgenler -->
+  <section id="eslesmeyen-sayfasi" class="sayfa" hidden>
+    <div class="hasta-ust">
+      <a class="dugme" href="#">← Hastalar</a>
+      <h1>Eşleşmeyen Röntgenler</h1>
+    </div>
+    <p class="sayfa-aciklama">Cihazdan gelen ama hiçbir hastayla eşleşmeyen çekimler. Doğru Hasta No'yu yazıp atayın.</p>
+    <div id="eslesmeyen-listesi" class="eslesmeyen-listesi"></div>
+    <p id="eslesmeyen-bos" class="liste-bos kart" hidden>Eşleşmeyen röntgen yok.</p>
   </section>
 
   <!-- Hasta ekranı: diş paneli + bilgiler -->
@@ -57,6 +142,13 @@
 
       <form id="hasta-formu" class="kart bilgi-formu">
         <h2>Hasta Bilgileri</h2>
+        <div id="form-cakisma" class="form-cakisma" role="alert" hidden>
+          <p id="form-cakisma-metni"></p>
+          <div class="form-cakisma-dugmeler">
+            <button id="form-cakisma-benimki" class="dugme" type="button">Benimkini kaydet</button>
+            <button id="form-cakisma-sunucu" class="dugme" type="button">Sunucudakini al</button>
+          </div>
+        </div>
         <div class="alanlar"></div>
         <div class="form-alt">
           <span id="kayit-durumu" role="status"></span>
@@ -99,18 +191,16 @@
     </div>
     </div>
 
-    <section id="sekme-rontgen" class="sekme-icerik galeri kart" data-tur="rontgen" hidden>
+    <section id="sekme-rontgen" class="sekme-icerik galeri kart" hidden>
       <div class="islem-baslik">
         <h2>Röntgenler</h2>
         <span class="galeri-durum" role="status"></span>
-        <button class="dugme birincil galeri-ekle" type="button">+ Röntgen Ekle</button>
-        <input type="file" accept="image/*" multiple hidden>
       </div>
       <div class="galeri-izgara"></div>
-      <p class="liste-bos">Bu hastanın röntgeni yok.</p>
+      <p class="liste-bos">Bu hastanın röntgeni yok. Röntgenler cihazdan gönderilince burada kendiliğinden görünür.</p>
     </section>
 
-    <section id="sekme-gorsel" class="sekme-icerik galeri kart" data-tur="gorsel" hidden>
+    <section id="sekme-gorsel" class="sekme-icerik galeri kart" hidden>
       <div class="islem-baslik">
         <h2>Görseller</h2>
         <span class="galeri-durum" role="status"></span>
@@ -137,6 +227,7 @@
   <dialog id="yeni-hasta-penceresi">
     <form id="yeni-hasta-formu" class="bilgi-formu">
       <h2>Yeni Hasta</h2>
+      <p class="form-notu">Hasta No, kayıt yapılınca sunucu tarafından verilir.</p>
       <div class="alanlar"></div>
       <div class="form-alt">
         <button id="yeni-hasta-iptal" class="dugme" type="button">Vazgeç</button>
@@ -188,10 +279,13 @@
     </label>
   </template>
 
+  <script src="vendor/pocketbase.umd.js"></script>
+  <script src="sunucu.js"></script>
   <script src="dis_paneli.js"></script>
   <script src="islemler.js"></script>
   <script src="dis_kayitlari.js"></script>
   <script src="gorseller.js"></script>
+  <script src="tasima.js"></script>
   <script src="hastalar.js"></script>
 </body>
 </html>
