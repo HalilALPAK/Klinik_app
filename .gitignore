@@ -1,0 +1,11 @@
+# Başka bir klinik ekranının fotoğrafı; gerçek kişi bilgisi içerir
+diş2.jpeg
+
+# Gerçek hasta verisi ve dışa aktarımlar asla depoya girmemeli
+*.dcm
+yedek/
+disa_aktarim/
+
+Thumbs.db
+desktop.ini
+.vscode/

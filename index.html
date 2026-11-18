@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alpotech Klinik</title>
+  <link rel="stylesheet" href="stil.css">
+</head>
+<body>
+  <!-- Ana ekran: hasta listesi -->
+  <section id="liste-sayfasi" class="sayfa">
+    <header class="ana-baslik">
+      <div class="logo-cerceve">
+        <img src="logo.png" alt="Alpotech Şirketler Grubu">
+      </div>
+    </header>
+
+    <div class="kart">
+      <div class="liste-arac">
+        <h1>Hastalar</h1>
+        <input id="hasta-arama" type="search" placeholder="Hasta No, isim, soyisim veya TC ile ara" aria-label="Hasta ara" autocomplete="off">
+        <button id="yeni-hasta-dugmesi" class="dugme birincil" type="button">+ Yeni Hasta</button>
+      </div>
+      <table class="hasta-tablosu">
+        <thead>
+          <tr><th>Hasta No</th><th>Ad</th><th>Soyad</th><th>TC Kimlik No</th><th>Yaş</th></tr>
+        </thead>
+        <tbody id="hasta-satirlari"></tbody>
+      </table>
+      <p id="liste-bos" class="liste-bos" hidden></p>
+    </div>
+  </section>
+
+  <!-- Hasta ekranı: diş paneli + bilgiler -->
+  <section id="hasta-sayfasi" class="sayfa" hidden>
+    <div class="hasta-ust">
+      <a class="dugme" href="#">← Hastalar</a>
+      <h1 id="hasta-basligi"></h1>
+      <span id="hasta-no-etiketi" class="hasta-no-etiketi"></span>
+    </div>
+
+    <nav class="sekmeler" aria-label="Hasta sekmeleri">
+      <button class="sekme" type="button" data-sekme="dis" aria-pressed="true">Diş Paneli</button>
+      <button class="sekme" type="button" data-sekme="rontgen" aria-pressed="false">Röntgenler</button>
+      <button class="sekme" type="button" data-sekme="gorsel" aria-pressed="false">Görseller</button>
+    </nav>
+
+    <div id="sekme-dis" class="sekme-icerik">
+    <div class="hasta-duzeni">
+      <main class="panel">
+        <div id="dis-paneli"></div>
+        <p class="secim-satiri">
+          <strong>Seçili dişler:</strong>
+          <output id="secili-disler" aria-live="polite">Seçili diş yok</output>
+        </p>
+      </main>
+
+      <form id="hasta-formu" class="kart bilgi-formu">
+        <h2>Hasta Bilgileri</h2>
+        <div class="alanlar"></div>
+        <div class="form-alt">
+          <span id="kayit-durumu" role="status"></span>
+          <button class="dugme birincil" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="islem-duzeni">
+      <section class="kart" aria-labelledby="yapilacak-baslik">
+        <div class="islem-baslik">
+          <h2 id="yapilacak-baslik">Yapılacak İşlemler</h2>
+          <button id="islem-ekle" class="dugme birincil" type="button" title="Yeni işlem ekle" aria-label="Yeni işlem ekle">+</button>
+        </div>
+        <div class="tablo-kaydirma">
+          <table class="islem-tablosu">
+            <thead>
+              <tr><th><span class="ekran-disi">Yapıldı</span></th><th>Sıra</th><th>Tedavi Adı</th><th>Dişler</th><th>Acil</th><th>Doktor Adı</th><th>Not</th><th><span class="ekran-disi">İşlemler</span></th></tr>
+            </thead>
+            <tbody id="yapilacak-satirlari"></tbody>
+          </table>
+        </div>
+        <p id="yapilacak-bos" class="liste-bos">Yapılacak işlem yok. Dişleri panelden seçip + düğmesine basın.</p>
+      </section>
+
+      <section class="kart" aria-labelledby="yapilan-baslik">
+        <div class="islem-baslik">
+          <h2 id="yapilan-baslik">Yapılan İşlemler</h2>
+        </div>
+        <div class="tablo-kaydirma">
+          <table class="islem-tablosu">
+            <thead>
+              <tr><th><span class="ekran-disi">Yapıldı</span></th><th>Sıra</th><th>Tarih</th><th>Tedavi Adı</th><th>Dişler</th><th>Acil</th><th>Doktor Adı</th><th>Not</th><th><span class="ekran-disi">İşlemler</span></th></tr>
+            </thead>
+            <tbody id="yapilan-satirlari"></tbody>
+          </table>
+        </div>
+        <p id="yapilan-bos" class="liste-bos">Yapılan işlem yok.</p>
+      </section>
+    </div>
+    </div>
+
+    <section id="sekme-rontgen" class="sekme-icerik galeri kart" data-tur="rontgen" hidden>
+      <div class="islem-baslik">
+        <h2>Röntgenler</h2>
+        <span class="galeri-durum" role="status"></span>
+        <button class="dugme birincil galeri-ekle" type="button">+ Röntgen Ekle</button>
+        <input type="file" accept="image/*" multiple hidden>
+      </div>
+      <div class="galeri-izgara"></div>
+      <p class="liste-bos">Bu hastanın röntgeni yok.</p>
+    </section>
+
+    <section id="sekme-gorsel" class="sekme-icerik galeri kart" data-tur="gorsel" hidden>
+      <div class="islem-baslik">
+        <h2>Görseller</h2>
+        <span class="galeri-durum" role="status"></span>
+        <button class="dugme birincil galeri-ekle" type="button">+ Görsel Ekle</button>
+        <input type="file" accept="image/*" multiple hidden>
+      </div>
+      <div class="galeri-izgara"></div>
+      <p class="liste-bos">Bu hastanın görseli yok.</p>
+    </section>
+  </section>
+
+  <dialog id="gorsel-goruntuleyici" aria-labelledby="goruntu-basligi">
+    <div class="goruntu-ust">
+      <span id="goruntu-basligi"></span>
+      <button id="goruntu-onceki" class="dugme" type="button">Önceki</button>
+      <button id="goruntu-sonraki" class="dugme" type="button">Sonraki</button>
+      <button id="goruntu-kapat" class="dugme" type="button">Kapat</button>
+    </div>
+    <div id="goruntu-alani" class="goruntu-alani">
+      <img id="goruntu-resmi" alt="">
+    </div>
+  </dialog>
+
+  <dialog id="yeni-hasta-penceresi">
+    <form id="yeni-hasta-formu" class="bilgi-formu">
+      <h2>Yeni Hasta</h2>
+      <div class="alanlar"></div>
+      <div class="form-alt">
+        <button id="yeni-hasta-iptal" class="dugme" type="button">Vazgeç</button>
+        <button class="dugme birincil" type="submit">Hastayı Ekle</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="dis-menusu" class="dis-menusu" hidden></div>
+  <div id="dis-ipucu" class="dis-ipucu" role="tooltip" hidden></div>
+
+  <dialog id="dis-kayit-penceresi">
+    <form id="dis-kayit-formu" class="bilgi-formu">
+      <h2 id="dis-kayit-baslik"></h2>
+      <div class="alanlar">
+        <label><span id="dis-kayit-etiket"></span>
+          <input id="dis-kayit-adi" required pattern=".*\S.*" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dis-kayit-onerileri">
+        </label>
+        <ul id="dis-kayit-onerileri" class="oneri-listesi" role="listbox" hidden></ul>
+      </div>
+      <div class="form-alt">
+        <button id="dis-kayit-iptal" class="dugme" type="button">Vazgeç</button>
+        <button class="dugme birincil" type="submit">Ekle</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="hasta-alanlari">
+    <label>Ad
+      <input name="ad" required pattern=".*\S.*" autocomplete="off">
+    </label>
+    <label>Soyad
+      <input name="soyad" required pattern=".*\S.*" autocomplete="off">
+    </label>
+    <label>TC Kimlik No
+      <input name="tc" required pattern="[1-9][0-9]{10}" maxlength="11" inputmode="numeric" title="0 ile başlamayan 11 haneli numara" autocomplete="off">
+    </label>
+    <div class="alan-ikili">
+      <label>Doğum Tarihi
+        <input name="dogumTarihi" type="date" required>
+      </label>
+      <div class="alan-yas">
+        <span>Yaş</span>
+        <output name="yas">-</output>
+      </div>
+    </div>
+    <label>Özel Bilgi
+      <textarea name="ozelBilgi" rows="5" placeholder="Alerji, kronik hastalık, kullandığı ilaçlar..."></textarea>
+    </label>
+  </template>
+
+  <script src="dis_paneli.js"></script>
+  <script src="islemler.js"></script>
+  <script src="dis_kayitlari.js"></script>
+  <script src="gorseller.js"></script>
+  <script src="hastalar.js"></script>
+</body>
+</html>
