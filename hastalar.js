@@ -289,6 +289,7 @@ function kullaniciCubugunuGoster() {
 function girisEkraniniGoster(mesaj = "") {
   kullaniciCubugu.hidden = true;
   girisMesaji.textContent = mesaj;
+  girisFormu.elements.beniHatirla.checked = beniHatirlaSecimi();
   sayfaGoster(girisSayfasi);
   girisFormu.elements.eposta.focus();
 }
@@ -389,8 +390,10 @@ girisFormu.addEventListener("submit", async (olay) => {
   dugme.disabled = true;
   girisMesaji.textContent = "Giriş yapılıyor...";
   try {
-    await girisYap(girisFormu.elements.eposta.value.trim(), girisFormu.elements.sifre.value);
+    const beniHatirla = girisFormu.elements.beniHatirla.checked;
+    await girisYap(girisFormu.elements.eposta.value.trim(), girisFormu.elements.sifre.value, beniHatirla);
     girisFormu.reset();
+    girisFormu.elements.beniHatirla.checked = beniHatirla;
     girisMesaji.textContent = "";
     await oturumuAc();
   } catch (hata) {

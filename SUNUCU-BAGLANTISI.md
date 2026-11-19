@@ -266,3 +266,25 @@ Bu dosya **hasta verisidir**: depoya, paylaşım klasörüne ya da sohbete konma
 **Küçük bir görünüm notu:** Röntgen başlığı `modaliteAdi + aciklama` olduğu için Orthanc açıklaması da "Panoramik" ise başlıkta "Panoramik - Panoramik" çıkıyor. İkisi aynıysa birini göstermek yeterli.
 
 **§8/5 (geçersiz token):** Şimdilik bir değişiklik yapılmadı; 30 dakikalık sınır kabul edilebilir.
+
+**`a138425` (2026-11-19):** Denendi. Röntgen başlığı artık tek "Panoramik", sekme simgesi geliyor; sunucuda yayına alınan sürüm bu. `kurulum/Alpotech_Klinik_Kurulum.bat` okundu; sunucuya kopyalanmıyor, laptoplarda elle çalıştırılacak.
+- **Önbellek:** Sunucu panel dosyalarına önbellek kuralı göndermiyordu. Bu yüzden tarayıcı eski JS'i bir süre sormadan kullanıyordu (deneme sırasında görüldü). Artık `/api/` ve `/_/` dışındaki her dosya `Cache-Control: no-cache` ile geliyor: tarayıcı her açılışta soruyor, dosya değişmediyse 304 geliyor. 7. betik de kopyalanan dosyaların tarihini "şimdi" yapıyor. Panel tarafında `?v=` gibi sürüm ekine gerek yok.
+
+**Hesaplar:** Kullanıcı hesapları sunucuda `10-klinik-kullanicilar.ps1` ile açılıyor. Betik e-posta, `name`, `rol` ve şifre (en az 12 karakter) soruyor; hesaplar `verified: true` olarak açılıyor. Panelde kayıt veya şifre sıfırlama ekranı **yapılmayacak**; hesapları yalnızca yönetici açar.
+
+## 10. İstek: "Beni hatırla" (2026-11-19)
+
+> Kullanıcı istedi. Sunucudaki Claude yazdı. Panel işi, sunucu tarafında değişiklik gerekmiyor.
+
+**Şu anki durum:** SDK varsayılan olarak oturumu `localStorage`'da tutuyor. Yani panel zaten her zaman "hatırlıyor": pencere kapanıp açılınca giriş istenmiyor. Kullanıcı bunun seçilebilir olmasını istiyor.
+
+**İstenen davranış:**
+- Giriş formuna **"Beni hatırla"** kutusu eklenecek.
+- **İşaretliyse:** Oturum `localStorage`'da kalır (bugünkü davranış). Pencere ve bilgisayar kapanıp açılınca giriş istenmez.
+- **İşaretsizse:** Oturum `sessionStorage`'da tutulur. Panel penceresi (`--app` penceresi dahil) kapanınca oturum biter, bir sonraki açılışta giriş istenir.
+- Kutunun son durumu tarayıcıda ayrı bir anahtarla hatırlanır (yalnızca `true`/`false`; e-posta ya da şifre saklanmaz). İlk açılışta varsayılan değer **işaretli**.
+- **Çıkış** düğmesi iki depoyu da temizler.
+- Uygulama önerisi: `BaseAuthStore`'dan türeyen küçük bir depo yaz. `save`/`clear`, seçime göre `localStorage` veya `sessionStorage`'a yazsın. Açılışta oturum önce `localStorage`'dan, yoksa `sessionStorage`'dan okunsun. Depo, `new PocketBase(location.origin, depo)` ile verilir. Seçim girişte, `authWithPassword`'den önce uygulanır.
+- Giriş alanlarına `autocomplete="username"` ve `autocomplete="current-password"` eklenebilir, Edge şifreyi kaydetmeyi önerir. Bu, kullanıcının o bilgisayardaki tercihidir; panel bunu zorlamasın.
+
+**Sunucunun sınırı:** `users` token süresi PocketBase varsayılanı olan **7 gün**. Panel açıkken 30 dakikada bir `authRefresh` yapıldığı için süre sürekli uzar. "Beni hatırla" işaretli olsa bile panel 7 günden uzun hiç açılmazsa giriş yeniden istenir; bu bilerek böyle bırakıldı (hasta verisi). Süre değişecekse sunucuda değiştirilir, panelde bir şey yapılmaz.

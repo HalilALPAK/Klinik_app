@@ -241,6 +241,8 @@ input[type="checkbox"]:disabled { cursor: default; }
 
 .giris-karti { max-width: 400px; margin: 0 auto; }
 .giris-mesaji { flex: 1; color: #c8302c; font-size: 14px; }
+.alanlar label.beni-hatirla { display: flex; align-items: center; gap: 8px; color: var(--yazi); font-weight: 400; cursor: pointer; }
+.beni-hatirla input { width: 18px; height: 18px; margin: 0; }
 
 .tasima-karti { max-width: 760px; margin: 0 auto; padding: 20px 24px; }
 .tasima-karti h2 { margin-top: 24px; }

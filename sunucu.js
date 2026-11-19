@@ -7,7 +7,78 @@
  */
 
 const SUNUCUDAN_ACILDI = location.protocol === "http:" || location.protocol === "https:";
-const pb = SUNUCUDAN_ACILDI ? new PocketBase(location.origin) : null;
+
+/*
+ * "Beni hatırla" (SUNUCU-BAGLANTISI.md §10): oturum işaretliyse localStorage'da kalır,
+ * işaretsizse sessionStorage'da tutulur ve pencere kapanınca biter.
+ * Anahtar SDK'nın varsayılanı; böylece önceki sürümde açılmış oturumlar geçerli kalır.
+ * Kutunun durumu ayrı bir anahtarda yalnızca "1"/"0" olarak saklanır.
+ */
+const OTURUM_ANAHTARI = "pocketbase_auth";
+const BENI_HATIRLA_ANAHTARI = "klinik.beniHatirla";
+
+function depoyaYaz(depo, anahtar, deger) {
+  try {
+    if (deger === null) depo.removeItem(anahtar);
+    else depo.setItem(anahtar, deger);
+  } catch {}
+}
+
+function depodanOku(depo, anahtar) {
+  try {
+    return depo.getItem(anahtar);
+  } catch {
+    return null;
+  }
+}
+
+function beniHatirlaSecimi() {
+  return depodanOku(localStorage, BENI_HATIRLA_ANAHTARI) !== "0"; // ilk açılışta işaretli
+}
+
+const OturumDeposu = (() => {
+  if (!SUNUCUDAN_ACILDI) return null;
+  // UMD paketi yalnızca istemciyi dışa veriyor; BaseAuthStore varsayılan deponun atası
+  const BaseAuthStore = Object.getPrototypeOf(new PocketBase(location.origin).authStore.constructor);
+
+  return class extends BaseAuthStore {
+    constructor() {
+      super();
+      this.kalici = true;
+      for (const [depo, kalici] of [[localStorage, true], [sessionStorage, false]]) {
+        try {
+          const kayit = JSON.parse(depodanOku(depo, OTURUM_ANAHTARI) || "null");
+          if (kayit && kayit.token) {
+            this.kalici = kalici;
+            super.save(kayit.token, kayit.record || kayit.model || null);
+            break;
+          }
+        } catch {}
+      }
+    }
+
+    // Girişte, authWithPassword'den önce çağrılır
+    hatirla(kalici) {
+      this.kalici = kalici;
+      depoyaYaz(localStorage, BENI_HATIRLA_ANAHTARI, kalici ? "1" : "0");
+    }
+
+    save(token, record) {
+      super.save(token, record);
+      const [hedef, diger] = this.kalici ? [localStorage, sessionStorage] : [sessionStorage, localStorage];
+      depoyaYaz(hedef, OTURUM_ANAHTARI, JSON.stringify({ token, record }));
+      depoyaYaz(diger, OTURUM_ANAHTARI, null);
+    }
+
+    clear() {
+      super.clear();
+      depoyaYaz(localStorage, OTURUM_ANAHTARI, null);
+      depoyaYaz(sessionStorage, OTURUM_ANAHTARI, null);
+    }
+  };
+})();
+
+const pb = SUNUCUDAN_ACILDI ? new PocketBase(location.origin, new OturumDeposu()) : null;
 if (pb) pb.autoCancellation(false);
 
 const OTURUM_TAZELEME_ARALIGI = 30 * 60 * 1000;
@@ -93,7 +164,8 @@ async function yetkiliResimAdresi(yol) {
   return URL.createObjectURL(await cevap.blob());
 }
 
-async function girisYap(eposta, sifre) {
+async function girisYap(eposta, sifre, beniHatirla) {
+  pb.authStore.hatirla(beniHatirla);
   await pb.collection("users").authWithPassword(eposta, sifre);
 }
 

@@ -67,7 +67,15 @@ Panel yalnızca klinik ağında açılır: 8091 portu sunucunun güvenlik duvar�
 ## Giriş
 
 - **Kullanıcılar:** PocketBase `users` koleksiyonu; `rol` alanı `"doktor"` ya da `"sekreter"`. Hesapları yönetici açar, kendi kendine kayıt yoktur.
-- **Oturum açma:** Panel `authWithPassword` ile girer, açılışta `authRefresh` yapar ve açık kaldığı sürece token'ı 30 dakikada bir tazeler.
+- **Oturum açma:** Panel `authWithPassword` ile girer, açılışta `authRefresh` yapar ve açık kaldığı sürece token'ı 30 dakikada bir tazeler. Token süresi sunucuda 7 gündür; panel 7 günden uzun açılmazsa giriş yeniden istenir.
+- **Beni hatırla:** Giriş formundaki kutu ilk açılışta işaretlidir.
+  - İşaretliyse oturum `localStorage`'da (`pocketbase_auth`) kalır; pencere ya da bilgisayar kapanıp açılınca giriş istenmez.
+  - İşaretsizse oturum `sessionStorage`'da tutulur; panel penceresi kapanınca oturum biter.
+  - Kutunun son durumu `localStorage`'da `klinik.beniHatirla` anahtarında yalnızca `"1"`/`"0"` olarak saklanır; e-posta ve şifre saklanmaz.
+  - Çıkış iki depoyu da temizler.
+  - Yöntem: `sunucu.js`'teki `OturumDeposu`, SDK'nın `BaseAuthStore`'undan türer ve `new PocketBase(location.origin, depo)` ile verilir. Açılışta oturumu önce `localStorage`'dan, yoksa `sessionStorage`'dan okur. Seçim girişte, `authWithPassword`'den önce uygulanır.
+  - Şifreyi kaydetmek tarayıcının işidir; alanlarda `autocomplete="username"` / `"current-password"` vardır, panel bunu zorlamaz.
+- **Hesaplar:** Yalnızca yönetici açar (sunucuda `10-klinik-kullanicilar.ps1`). Panelde kayıt ya da şifre sıfırlama ekranı yoktur ve eklenmeyecek.
 - **Giriş ekranına dönüş:** Token süresi dolunca ya da sunucu 401 dönünce panel giriş ekranına döner. Tekrar girişte kaldığı sayfaya geri gelir.
 - **Görünür olmayan geçersiz oturum:** Girişsiz liste isteği hata vermeden boş döndüğü için, sunucuda geçersiz kılınan bir oturumu panel ancak bir sonraki tazelemede (en geç 30 dakika) fark eder.
 - **Rol farkı:** Görsel silme düğmesi yalnızca `rol = doktor` kullanıcılarda görünür; sunucu da bunu zorlar.
