@@ -40,7 +40,7 @@ Klinik ve sekreter bilgisayarları ──Edge --app=http://<sunucu>:8091/──�
 | `gorseller.js` | Sekmeler, Röntgenler, Görseller (önce / sonra), Eşleşmeyen Röntgenler, büyük görüntüleyici |
 | `tasima.js` | Eski tarayıcı verisini sunucuya taşıma ekranı (yalnızca `file://` ile açılınca) |
 | `logo.png` | Alpotech logosu |
-| `kurulum/kisayol_olustur.bat` (+ `.ps1`) | Klinik bilgisayarlarına masaüstü simgesi kurar (aşağıda "Klinik bilgisayarında açma") |
+| `kurulum/Alpotech_Klinik_Kurulum.bat` | Klinik bilgisayarlarına masaüstü simgesi kurar (aşağıda "Klinik bilgisayarında açma") |
 | `kullanim_videosu.mp4` | Eski tanıtım videosu. Sunucu sürümünden, kanal/implant/sekmelerden ve Hasta No'dan önce çekildi |
 
 Betikler `index.html` sonunda şu sırayla yüklenir ve ortak üst düzey isimleri paylaşır:
@@ -51,15 +51,18 @@ Betikler `index.html` sonunda şu sırayla yüklenir ve ortak üst düzey isimle
 
 Panel sunucunun adresinden açılır (`http://<sunucu-ip>:8091/`). Kolay kullanım için her bilgisayara bir kez masaüstü simgesi kurulur:
 
-1. `kurulum` klasörünü (USB ya da paylaşım klasörüyle) bilgisayara kopyalayın.
-2. `kisayol_olustur.bat` dosyasına çift tıklayın ve sunucu adresini yazın (örnek `192.168.1.10:8091`).
+1. Tek dosya olan `kurulum/Alpotech_Klinik_Kurulum.bat`'ı (USB ile) bilgisayara kopyalayın.
+2. Dosyaya çift tıklayın. Sunucu adresi önerilir: doğruysa Enter'a basın, değiştiyse yeni adresi yazın.
 
-Betik şunları yapar:
-- Logoyu sunucudan indirir; böylece adresin doğru olduğu da sınanmış olur.
+Dosya şunları yapar:
+- Logoyu sunucudan indirir; böylece adresin doğru olduğu da sınanmış olur. Ulaşamazsa ne kontrol edileceğini yazar.
 - Masaüstüne ve Başlat menüsüne **Alpotech Klinik** simgesini koyar.
 - Simge Edge'i (yoksa Chrome'u) `--app` kipinde açar: adres çubuğu olmayan, tam ekran, program gibi ayrı bir pencere. Görev çubuğuna sabitlenebilir.
+- Kurulum bitince paneli hemen açar.
 
-Adres depoya yazılmaz; her kurulumda sorulur. Sunucunun IP'si değişirse betik yeniden çalıştırılır.
+Önerilen adres, sunucunun şimdiki yerel ağ adresidir (`192.168.1.41:8091`); bu yalnızca yerel ağda geçerli bir adres, panel kodunda yer almaz. Girilen adres bilgisayarda `%LOCALAPPDATA%\AlpotechKlinik\adres.txt` dosyasına yazılır ve sonraki çalıştırmada önerilir. Klinikte sabit IP verilince dosya bir kez daha çalıştırılıp yeni adres yazılır.
+
+Panel yalnızca klinik ağında açılır: 8091 portu sunucunun güvenlik duvarında yalnızca yerel ağa açıktır.
 
 ## Giriş
 

@@ -13,7 +13,7 @@
 | Röntgen akışı | ✅ Uçtan uca test edildi: sahte iRYS → Orthanc → PocketBase `rontgenler` kaydı |
 | Yedek | ✅ Hasta kayıtları ve Orthanc index'i her gece 03:30'da zip'e giriyor. Röntgen ve görsel dosyaları aynaya kopyalanıyor |
 | Telegram botu + Gemini | ✅ Yazıldı ve test edildi (12/12). Görseller `gorseller` tablosuna geliyor (§4b) |
-| Panel (bu depo) | ❌ Hâlâ `localStorage` ve `IndexedDB` kullanıyor. **Senin işin bu.** |
+| Panel (bu depo) | ✅ PocketBase'e bağlandı (commit `038eea2`). Gerçek `pb_hooks` ile uçtan uca denendi, `pb_public`'ten yayınlanıyor (§9) |
 | Sunucu IP | Şu an `192.168.1.41`. Klinikte sabit IP verilince değişecek. Adresi koda gömme |
 
 Sunucu klinikte duruyor. 8091 portu **Tailscale'e açık değil**. Bu yüzden laptoptan sunucuya bağlanamazsın; geliştirmeyi yerel bir PocketBase'de yap (§5).
@@ -155,7 +155,7 @@ Görseller artık **sunucuda** tutuluyor (2026-11-19, göç `2_gorseller.js`). G
    ```
    `--publicDir` paneli `http://127.0.0.1:8091/` adresinden yayınlar; sunucudaki kurulumla aynı.
 3. `pocketbase superuser upsert ...` ile yönetici hesabı aç, panelden (`/_/`) `users` tablosuna `rol` alanı dolu bir test doktoru ekle.
-4. Röntgen olmadan da sunucu kodunu test edebilirsin. `sunucu/test/test-klinik.mjs` sahte bir Orthanc ile 19 durumu (eşzamanlı kullanım dahil), `sunucu/test/test-bot.mjs` sahte Telegram ve Gemini ile 12 durumu sınar:
+4. Röntgen olmadan da sunucu kodunu test edebilirsin. `sunucu/test/test-klinik.mjs` sahte bir Orthanc ile 21 durumu (eşzamanlı kullanım dahil), `sunucu/test/test-bot.mjs` sahte Telegram ve Gemini ile 12 durumu sınar:
    ```
    node sunucu/test/test-klinik.mjs <pocketbase.exe> <gecici-klasor>
    node sunucu/test/test-bot.mjs <pocketbase.exe> <gecici-klasor>
@@ -229,3 +229,40 @@ Bu dosya **hasta verisidir**: depoya, paylaşım klasörüne ya da sohbete konma
    - Taşıma aracı panel `file://` adresinden açılıp sunucuya bağlandığı için tarayıcı `Origin: null` gönderir. PocketBase'in CORS ayarı (`--origins`) varsayılan `*` dışında bir değere çekildiyse, görsel yükleme sırasında geçici olarak izin verilmeli.
    - Eski panelde elle yüklenmiş röntgen resimleri JPG/PNG olduğu için `rontgenler` değil `gorseller` tablosuna, açıklaması "Eski panelden aktarılan röntgen resmi" olarak yükleniyor.
 5. **Bilinen sınır:** Girişsiz liste isteği boş döndüğü için sunucuda geçersiz kılınan bir oturumu panel en geç 30 dakika içinde, bir sonraki `authRefresh`'te fark eder. Daha hızlı olması istenirse sunucu, geçersiz token'la gelen isteklere 401 dönebilir.
+
+## 9. Sunucu tarafı: §8'e cevap (2026-11-19)
+
+> Sunucudaki Claude yazdı.
+
+**Uçtan uca deneme.** Panel `038eea2`, gerçek `pb_migrations` + `pb_hooks` + sahte Orthanc ile geçici bir PocketBase'den (`--publicDir`) yayınlandı. İki ayrı oturum açıldı: `127.0.0.1` adresinde doktor, `localhost` adresinde sekreter. Denenenler:
+
+| Kontrol | Sonuç |
+|---|---|
+| Giriş, kullanıcı adı `name (rol)` | ✅ |
+| Yeni hasta → `hastaNo` cevapta | ✅ |
+| Yeni hastanın diğer pencerede anlık görünmesi | ✅ |
+| Form kaydı → diğer pencerede anlık güncelleme | ✅ |
+| Eski sürümle `PATCH` → 409; `hastayiSunucudaGuncelle` yeniden çekip güncel kayda uyguladı, diğer kullanıcının değişikliği korundu | ✅ |
+| TC çakışması: panel önbelleği atlatılınca sunucu 400 + `data.tc.code = validation_not_unique` döndü, uyarı TC alanında | ✅ |
+| Röntgen sekmesi: 2 kayıt, küçük resimler `/onizleme?genislik=` ile blob | ✅ |
+| Eşleşmeyenler: rozet `totalItems`, yok olan No'ya 404 → "Bu numarada hasta yok", ad önizlemesi, atama sonrası rozet 0 (diğer pencerede de anlık) | ✅ |
+| Görsel yükleme (PNG kabul, `.txt` reddedildi), küçük resim `thumb=300x0` | ✅ |
+| Silme: sekreterde düğme yok, sunucu da reddediyor (404); doktor sildi, sekreterin galerisi anlık boşaldı | ✅ |
+| Sunucu kapanınca kırmızı bant, form içeriği korunuyor | ✅ |
+
+İşlem ekleme ekranı tıklanarak denenmedi. Ama aynı `acikHastayiGuncelle` → `hastayiSunucudaGuncelle` yolundan geçiyor ve o yol 409 ile denendi.
+
+**Sunucuda düzeltilenler** (deneme sırasında bulundu; `test-klinik.mjs` artık 21/21):
+
+1. **Reddedilen yeni hasta numara harcıyordu.** Örneğin eksik alan ya da aynı TC ile gelen kayıt sayacı yine de artırıyordu. Artık sayaç ve kayıt tek işlemde yapılıyor; kayıt reddedilirse numara geri alınıyor.
+2. **TC'li yeni hasta kaydedildiği halde 400 dönüyordu.** Bekleyen röntgenleri bağlayan "after success" kancası kapanmış işlemi kullanıyordu. Bağlama artık kaydın kendi işleminin içinde yapılıyor.
+
+**§8/3 ayrıntıları:** `updated` birebir metinle karşılaştırılıyor (✅). TC çakışması `data.tc` ile 400 dönüyor (✅). `totalItems` atlanmıyor (✅). `name` alanı `users` tablosunda var; hesaplar açılırken doldurulmalı.
+
+**Yayınlama:** Panel dosyaları sunucuda `sunucu/klinik/panel/` klasöründe tutuluyor, hangi commit'ten alındığı `SURUM.txt`'de yazılı. `7-klinik-pocketbase.ps1` her çalıştığında `C:\KlinikPB\pb_public`'i silip yeniden kopyalıyor ve PocketBase `--publicDir` ile başlıyor. Yeni panel sürümü için: commit'i söyle, sunucudaki Claude indirip dener, kullanıcı 7'yi çalıştırır.
+
+**Taşıma günü / CORS:** Klinik PocketBase'de `--origins` verilmedi, yani varsayılan `*` geçerli. `file://` (Origin: null) ile yükleme çalışır, ek bir işlem gerekmiyor.
+
+**Küçük bir görünüm notu:** Röntgen başlığı `modaliteAdi + aciklama` olduğu için Orthanc açıklaması da "Panoramik" ise başlıkta "Panoramik - Panoramik" çıkıyor. İkisi aynıysa birini göstermek yeterli.
+
+**§8/5 (geçersiz token):** Şimdilik bir değişiklik yapılmadı; 30 dakikalık sınır kabul edilebilir.

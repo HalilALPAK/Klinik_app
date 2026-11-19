@@ -113,7 +113,11 @@ function kutucukYazisi(oge, ekDugmeler) {
 /* Röntgenler */
 
 function rontgenOgesi(kayit) {
-  const baslik = [modaliteAdi(kayit.modalite), kayit.aciklama].filter(Boolean).join(" - ");
+  const tur = modaliteAdi(kayit.modalite);
+  const aciklama = (kayit.aciklama || "").trim();
+  // Orthanc açıklaması tür adıyla aynıysa ("Panoramik - Panoramik") bir kez yaz
+  const ayni = tur && aciklama.toLocaleLowerCase("tr") === tur.toLocaleLowerCase("tr");
+  const baslik = [tur, ayni ? "" : aciklama].filter(Boolean).join(" - ");
   return {
     kayit,
     baslik,
