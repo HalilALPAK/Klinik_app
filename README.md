@@ -40,11 +40,26 @@ Klinik ve sekreter bilgisayarları ──Edge --app=http://<sunucu>:8091/──�
 | `gorseller.js` | Sekmeler, Röntgenler, Görseller (önce / sonra), Eşleşmeyen Röntgenler, büyük görüntüleyici |
 | `tasima.js` | Eski tarayıcı verisini sunucuya taşıma ekranı (yalnızca `file://` ile açılınca) |
 | `logo.png` | Alpotech logosu |
+| `kurulum/kisayol_olustur.bat` (+ `.ps1`) | Klinik bilgisayarlarına masaüstü simgesi kurar (aşağıda "Klinik bilgisayarında açma") |
 | `kullanim_videosu.mp4` | Eski tanıtım videosu. Sunucu sürümünden, kanal/implant/sekmelerden ve Hasta No'dan önce çekildi |
 
 Betikler `index.html` sonunda şu sırayla yüklenir ve ortak üst düzey isimleri paylaşır:
 
 `vendor/pocketbase.umd.js`, `sunucu.js`, `dis_paneli.js`, `islemler.js`, `dis_kayitlari.js`, `gorseller.js`, `tasima.js`, `hastalar.js`
+
+## Klinik bilgisayarında açma
+
+Panel sunucunun adresinden açılır (`http://<sunucu-ip>:8091/`). Kolay kullanım için her bilgisayara bir kez masaüstü simgesi kurulur:
+
+1. `kurulum` klasörünü (USB ya da paylaşım klasörüyle) bilgisayara kopyalayın.
+2. `kisayol_olustur.bat` dosyasına çift tıklayın ve sunucu adresini yazın (örnek `192.168.1.10:8091`).
+
+Betik şunları yapar:
+- Logoyu sunucudan indirir; böylece adresin doğru olduğu da sınanmış olur.
+- Masaüstüne ve Başlat menüsüne **Alpotech Klinik** simgesini koyar.
+- Simge Edge'i (yoksa Chrome'u) `--app` kipinde açar: adres çubuğu olmayan, tam ekran, program gibi ayrı bir pencere. Görev çubuğuna sabitlenebilir.
+
+Adres depoya yazılmaz; her kurulumda sorulur. Sunucunun IP'si değişirse betik yeniden çalıştırılır.
 
 ## Giriş
 
